@@ -66,7 +66,7 @@
             font-size: 16px;
         }
         
-        input[type="text"], input[type="password"] {
+        input[type="text"] {
             width: 100%;
             padding: 15px;
             border: 2px solid #e0e0e0;
@@ -77,7 +77,7 @@
             direction: ltr;
         }
         
-        input[type="text"]:focus, input[type="password"]:focus {
+        input[type="text"]:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -248,39 +248,6 @@
             font-size: 14px;
         }
         
-        .api-setup {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .api-setup h3 {
-            color: #856404;
-            margin-bottom: 10px;
-        }
-        
-        .api-setup p {
-            color: #856404;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-        
-        .api-setup a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        
-        .api-setup a:hover {
-            text-decoration: underline;
-        }
-        
-        .hide {
-            display: none;
-        }
-        
         .info-note {
             background: #e7f3ff;
             border: 1px solid #2196F3;
@@ -290,55 +257,51 @@
             font-size: 13px;
             color: #0d47a1;
         }
+        
+        .tips {
+            background: #fff8dc;
+            border: 1px solid #ffa500;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #cc8400;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔍 بحث رقم الملف</h1>
+        <h1>🔍 بحث رقم الملف - بريد الجزائر</h1>
         <div style="text-align: center;">
             <span class="ai-badge">🤖 مدعوم بـ Gemini 2.0 Flash AI</span>
         </div>
-        <p class="subtitle">أدخل رقم الحساب أو التقط صورة للبحث بواسطة الذكاء الاصطناعي</p>
+        <p class="subtitle">التقط صورة لطابع البريد أو أدخل الرقم يدوياً</p>
         
-        <!-- قسم إعداد API Key -->
-        <div class="api-setup" id="apiSetup">
-            <h3>⚙️ الإعداد الأولي</h3>
-            <p>لاستخدام ميزة الكاميرا مع AI، أدخل مفتاح API الخاص بـ Google Gemini:</p>
-            <div class="input-group">
-                <input type="password" id="apiKeyInput" placeholder="AIzaSyA8aQNXrGIzy4iJsoBYUzRU9X7n33pbRbs">
-                <button class="btn-search" onclick="saveApiKey()" style="margin-top: 10px; width: 100%;">
-                    💾 حفظ المفتاح
-                </button>
-            </div>
-            <p style="font-size: 12px;">
-                للحصول على API Key مجاني: 
-                <a href="https://aistudio.google.com/app/apikey" target="_blank">
-                    انقر هنا
-                </a>
-            </p>
-        </div>
-        
-        <div class="info-note">
-            ℹ️ ملاحظة: أرقام الحسابات تتراوح من 1 إلى 8 خانات
-        </div>
-        
-        <div class="input-group">
-            <label for="accountInput">رقم الحساب (من 1 إلى 8 خانات):</label>
-            <input type="text" id="accountInput" placeholder="مثال: 9797922" maxlength="8">
-        </div>
-        
-        <div class="button-group">
-            <button class="btn-search" onclick="searchAccount()">🔍 بحث</button>
-            <button class="btn-clear" onclick="clearFields()">🗑️ مسح</button>
+        <div class="tips">
+            💡 نصيحة: صوّر الرقم الكبير المكون من 10 خانات (مثل: 0008542242)
         </div>
         
         <div class="camera-section">
-            <label class="camera-label">📸 أو التقط صورة لرقم الحساب (AI سيكتشفه)</label>
+            <label class="camera-label">📸 التقط صورة لطابع البريد (AI سيجلب الرقم تلقائياً)</label>
             <input type="file" id="imageInput" accept="image/*" capture="environment" onchange="handleImageUpload()">
             <button class="camera-button" id="cameraBtn" onclick="document.getElementById('imageInput').click()">
                 📷 فتح الكاميرا
             </button>
             <div id="imagePreview"></div>
+        </div>
+        
+        <div class="info-note">
+            ℹ️ أو أدخل رقم الحساب يدوياً (من 1 إلى 8 خانات)
+        </div>
+        
+        <div class="input-group">
+            <label for="accountInput">رقم الحساب:</label>
+            <input type="text" id="accountInput" placeholder="مثال: 8542242" maxlength="8">
+        </div>
+        
+        <div class="button-group">
+            <button class="btn-search" onclick="searchAccount()">🔍 بحث</button>
+            <button class="btn-clear" onclick="clearFields()">🗑️ مسح</button>
         </div>
         
         <div class="loading" id="loading">
@@ -356,12 +319,9 @@
     <script>
         // تحميل بيانات الحسابات
         let accountData = {};
-        let geminiApiKey = localStorage.getItem('geminiApiKey') || '';
         
-        // إخفاء قسم API إذا كان المفتاح محفوظاً
-        if (geminiApiKey) {
-            document.getElementById('apiSetup').classList.add('hide');
-        }
+        // API Key مدمج مباشرة
+        const geminiApiKey = 'AIzaSyA8aQNXrGIzy4iJsoBYUzRU9X7n33pbRbs';
         
         // تحميل ملف JSON
         fetch('data.json')
@@ -375,19 +335,6 @@
                 showResult('خطأ في تحميل قاعدة البيانات', 'error');
             });
         
-        // حفظ API Key
-        function saveApiKey() {
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            if (!apiKey) {
-                alert('الرجاء إدخال API Key');
-                return;
-            }
-            localStorage.setItem('geminiApiKey', apiKey);
-            geminiApiKey = apiKey;
-            document.getElementById('apiSetup').classList.add('hide');
-            showResult('✅ تم حفظ API Key بنجاح! يمكنك الآن استخدام الكاميرا', 'success');
-        }
-        
         // البحث عن رقم الحساب
         function searchAccount() {
             const accountInput = document.getElementById('accountInput').value.trim();
@@ -397,7 +344,7 @@
                 return;
             }
             
-            // التحقق من أن الإدخال أرقام فقط وطوله من 1-8
+            // التحقق من أن الإدخال أرقام فقط
             if (!/^\\d+$/.test(accountInput) || accountInput.length > 8) {
                 showResult('⚠️ رقم الحساب يجب أن يكون أرقام فقط (من 1 إلى 8 خانات)', 'error');
                 return;
@@ -419,12 +366,6 @@
             const file = fileInput.files[0];
             
             if (!file) return;
-            
-            if (!geminiApiKey) {
-                showResult('⚠️ الرجاء إدخال API Key أولاً في قسم الإعداد', 'error');
-                document.getElementById('apiSetup').classList.remove('hide');
-                return;
-            }
             
             // عرض الصورة
             const reader = new FileReader();
@@ -448,12 +389,12 @@
                 // إزالة بادئة data URL
                 const base64Data = base64Image.split(',')[1];
                 
-                // إعداد الطلب
+                // إعداد الطلب مع تعليمات محددة لطوابع بريد الجزائر
                 const requestBody = {
                     contents: [{
                         parts: [
                             {
-                                text: "هذه صورة تحتوي على رقم حساب. الرقم يمكن أن يكون من 1 إلى 8 خانات فقط. استخرج فقط الأرقام الموجودة في الصورة بدون أي نص إضافي. إذا وجدت أكثر من رقم، أعط الرقم الأكثر وضوحاً أو الأكبر حجماً في الصورة. أرجع الرقم فقط بدون أي تفسير أو نص إضافي."
+                                text: "هذه صورة لطابع من بريد الجزائر (ALGERIE POSTE). يوجد في الصورة رقم حساب كبير مكون من 10 خانات (مثل 0008542242). ابحث عن هذا الرقم واستخرج فقط آخر 7 أو 8 خانات منه (بإزالة الأصفار من البداية). مثال: إذا كان الرقم 0008542242، أرجع فقط: 8542242. أرجع الرقم فقط بدون أي نص إضافي أو تفسير."
                             },
                             {
                                 inline_data: {
@@ -487,15 +428,26 @@
                 // استخراج النص من الاستجابة
                 const extractedText = data.candidates[0].content.parts[0].text.trim();
                 
-                // استخراج أي رقم من 1-8 خانات
+                // استخراج الأرقام
                 const numbers = extractedText.match(/\\d+/g);
                 
                 if (numbers && numbers.length > 0) {
-                    // البحث عن أول رقم موجود في قاعدة البيانات
+                    // البحث عن رقم موجود في قاعدة البيانات
                     let foundAccount = null;
                     let foundFileNumber = null;
                     
+                    // جرب كل الأرقام المكتشفة
                     for (let num of numbers) {
+                        // إزالة الأصفار من البداية
+                        const cleanNum = num.replace(/^0+/, '');
+                        
+                        if (cleanNum.length <= 8 && accountData[cleanNum]) {
+                            foundAccount = cleanNum;
+                            foundFileNumber = accountData[cleanNum];
+                            break;
+                        }
+                        
+                        // جرب الرقم كما هو أيضاً
                         if (num.length <= 8 && accountData[num]) {
                             foundAccount = num;
                             foundFileNumber = accountData[num];
@@ -507,28 +459,19 @@
                         document.getElementById('accountInput').value = foundAccount;
                         showResult(`✅ AI اكتشف الرقم بنجاح!<div class="file-number">رقم الملف: ${foundFileNumber}</div>رقم الحساب المكتشف: ${foundAccount}`, 'success');
                     } else {
-                        // جرب أول رقم مكتشف
-                        const accountNum = numbers[0];
-                        if (accountNum.length <= 8) {
-                            document.getElementById('accountInput').value = accountNum;
-                            showResult(`⚠️ AI اكتشف الرقم: ${accountNum}<br>لكن لم يتم العثور عليه في قاعدة البيانات`, 'error');
-                        } else {
-                            showResult(`⚠️ الرقم المكتشف (${accountNum}) أطول من 8 خانات`, 'error');
-                        }
+                        // عرض أول رقم مكتشف
+                        const accountNum = numbers[0].replace(/^0+/, '');
+                        document.getElementById('accountInput').value = accountNum;
+                        showResult(`⚠️ AI اكتشف الرقم: ${accountNum}<br>لكن لم يتم العثور عليه في قاعدة البيانات<br>الأرقام المكتشفة: ${numbers.join(', ')}`, 'error');
                     }
                 } else {
-                    showResult('❌ لم يستطع AI اكتشاف أرقام في الصورة<br>النص المكتشف: ' + extractedText, 'error');
+                    showResult('❌ لم يستطع AI اكتشاف أرقام في الصورة<br>النص المكتشف: ' + extractedText + '<br>حاول التقاط صورة أوضح', 'error');
                 }
                 
             } catch (error) {
                 showLoading(false);
                 console.error('خطأ في معالجة الصورة:', error);
-                
-                if (error.message.includes('API Error: 400')) {
-                    showResult('❌ خطأ في API Key. تأكد من صحة المفتاح<br><button onclick="document.getElementById(\'apiSetup\').classList.remove(\'hide\')" style="margin-top: 10px; padding: 10px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">تعديل API Key</button>', 'error');
-                } else {
-                    showResult('❌ حدث خطأ أثناء معالجة الصورة<br>الرجاء المحاولة مرة أخرى', 'error');
-                }
+                showResult('❌ حدث خطأ أثناء معالجة الصورة<br>الرجاء المحاولة مرة أخرى', 'error');
             }
         }
         
