@@ -316,18 +316,25 @@
         </div>
 
         <div class="numpad">
-            <button class="num-btn" onclick="addNumber('1')">1</button>
-            <button class="num-btn" onclick="addNumber('2')">2</button>
+            <!-- الصف الأول: 3-2-1 من اليمين لليسار -->
             <button class="num-btn" onclick="addNumber('3')">3</button>
-            <button class="num-btn" onclick="addNumber('4')">4</button>
-            <button class="num-btn" onclick="addNumber('5')">5</button>
+            <button class="num-btn" onclick="addNumber('2')">2</button>
+            <button class="num-btn" onclick="addNumber('1')">1</button>
+            
+            <!-- الصف الثاني: 6-5-4 من اليمين لليسار -->
             <button class="num-btn" onclick="addNumber('6')">6</button>
-            <button class="num-btn" onclick="addNumber('7')">7</button>
-            <button class="num-btn" onclick="addNumber('8')">8</button>
+            <button class="num-btn" onclick="addNumber('5')">5</button>
+            <button class="num-btn" onclick="addNumber('4')">4</button>
+            
+            <!-- الصف الثالث: 9-8-7 من اليمين لليسار -->
             <button class="num-btn" onclick="addNumber('9')">9</button>
-            <button class="control-btn delete-btn" onclick="deleteLastDigit()">⌫ حذف</button>
-            <button class="num-btn" onclick="addNumber('0')">0</button>
+            <button class="num-btn" onclick="addNumber('8')">8</button>
+            <button class="num-btn" onclick="addNumber('7')">7</button>
+            
+            <!-- الصف الرابع: أزرار التحكم -->
             <button class="control-btn clear-btn" onclick="clearInput()">🗑️ مسح</button>
+            <button class="num-btn" onclick="addNumber('0')">0</button>
+            <button class="control-btn delete-btn" onclick="deleteLastDigit()">⌫ حذف</button>
         </div>
 
         <div class="result empty" id="result">
