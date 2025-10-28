@@ -94,23 +94,12 @@
 
         .control-btn {
             padding: 20px;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             border: none;
             border-radius: 15px;
             cursor: pointer;
             transition: all 0.2s;
-        }
-
-        .clear-btn {
-            background: #ff6b6b;
-            color: white;
-            grid-column: span 2;
-        }
-
-        .clear-btn:hover {
-            background: #ff5252;
-            transform: translateY(-2px);
         }
 
         .delete-btn {
@@ -123,6 +112,16 @@
             transform: translateY(-2px);
         }
 
+        .clear-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+
         .result {
             margin-top: 25px;
             padding: 20px;
@@ -130,7 +129,12 @@
             text-align: center;
             font-size: 18px;
             font-weight: bold;
-            display: none;
+            /* إزالة display: none لجعلها دائماً موجودة */
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
         }
 
         .result.success {
@@ -143,6 +147,12 @@
             background: #d1ecf1;
             color: #0c5460;
             border: 2px solid #bee5eb;
+        }
+
+        .result.empty {
+            background: #f8f9ff;
+            color: #999;
+            border: 2px solid #e0e0e0;
         }
 
         .file-number {
@@ -198,22 +208,33 @@
             📝 اكتب رقم الحساب (من 2 إلى 10 أرقام)
         </div>
 
+        <!-- لوحة الأرقام: 1 على اليسار، 3 على اليمين -->
         <div class="numpad">
+            <!-- الصف الأول: 1 2 3 (من اليسار لليمين) -->
             <button class="num-btn" onclick="addNumber('1')">1</button>
             <button class="num-btn" onclick="addNumber('2')">2</button>
             <button class="num-btn" onclick="addNumber('3')">3</button>
+
+            <!-- الصف الثاني: 4 5 6 -->
             <button class="num-btn" onclick="addNumber('4')">4</button>
             <button class="num-btn" onclick="addNumber('5')">5</button>
             <button class="num-btn" onclick="addNumber('6')">6</button>
+
+            <!-- الصف الثالث: 7 8 9 -->
             <button class="num-btn" onclick="addNumber('7')">7</button>
             <button class="num-btn" onclick="addNumber('8')">8</button>
             <button class="num-btn" onclick="addNumber('9')">9</button>
-            <button class="control-btn clear-btn" onclick="clearInput()">🗑️ مسح الكل</button>
-            <button class="num-btn" onclick="addNumber('0')">0</button>
+
+            <!-- الصف الرابع: حذف 0 مسح -->
             <button class="control-btn delete-btn" onclick="deleteLastDigit()">⌫ حذف</button>
+            <button class="num-btn" onclick="addNumber('0')">0</button>
+            <button class="control-btn clear-btn" onclick="clearInput()">🗑️ مسح</button>
         </div>
 
-        <div class="result" id="result"></div>
+        <!-- النتيجة - ثابتة دائماً -->
+        <div class="result empty" id="result">
+            <span>النتيجة ستظهر هنا</span>
+        </div>
 
         <div class="stats">
             📊 عدد الحسابات: <span id="totalAccounts">---</span>
@@ -260,7 +281,7 @@
         function clearInput() {
             currentInput = '';
             updateDisplay();
-            hideResult();
+            showResult('النتيجة ستظهر هنا', 'empty');
         }
 
         // تحديث العرض
@@ -278,7 +299,11 @@
         // البحث التلقائي
         function autoSearch() {
             if (currentInput.length < 2) {
-                hideResult();
+                if (currentInput.length === 0) {
+                    showResult('النتيجة ستظهر هنا', 'empty');
+                } else {
+                    showResult('اكتب رقمين على الأقل', 'empty');
+                }
                 return;
             }
 
@@ -296,12 +321,6 @@
             const resultDiv = document.getElementById('result');
             resultDiv.innerHTML = message;
             resultDiv.className = 'result ' + type;
-            resultDiv.style.display = 'block';
-        }
-
-        // إخفاء النتيجة
-        function hideResult() {
-            document.getElementById('result').style.display = 'none';
         }
 
         // دعم لوحة المفاتيح الفعلية
