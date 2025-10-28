@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>بحث رقم الملف - بسيط وسريع</title>
     <style>
-        /* نفس الـ CSS السابق بالضبط */
         * {
             margin: 0;
             padding: 0;
@@ -342,31 +341,37 @@
 
     <script>
         // ⚙️ ضع مفتاح Gemini API الخاص بك هنا
-        const GEMINI_API_KEY = 'AIzaSyA8aQNXrGIzy4iJsoBYUzRU9X7n33pbRbs';
-        const GEMINI_MODEL = 'gemini-2.0-flash';
+        const GEMINI_API_KEY = 'YOUR_API_KEY_HERE';
+        const GEMINI_MODEL = 'gemini-2.0-flash-exp';
 
-        // إعدادات الضغط (مثل البرنامج)
+        // إعدادات الضغط
         const COMPRESSION_CONFIG = {
-            maxWidth: 1024,        // العرض الأقصى بعد الضغط
-            maxHeight: 1024,       // الارتفاع الأقصى بعد الضغط
-            quality: 0.6,          // جودة JPEG (60%)
-            targetSizeKB: 100      // الحجم المستهدف بالكيلوبايت
+            maxWidth: 1024,
+            maxHeight: 1024,
+            quality: 0.6,
+            targetSizeKB: 100
         };
 
         let accountData = {};
         let currentInput = '';
+        let dataLoaded = false; // ✅ متغير جديد لتتبع حالة التحميل
 
-        // تحميل ملف JSON
-        fetch('data.json')
-            .then(response => response.json())
-            .then(data => {
-                accountData = data;
+        // تحميل ملف JSON مع ضمان جاهزيته
+        async function loadAccountData() {
+            try {
+                const response = await fetch('data.json');
+                accountData = await response.json();
+                dataLoaded = true; // ✅ تأكيد التحميل
                 document.getElementById('totalAccounts').textContent = Object.keys(accountData).length;
-            })
-            .catch(error => {
-                console.error('خطأ في تحميل البيانات:', error);
+                console.log('✅ تم تحميل قاعدة البيانات:', Object.keys(accountData).length, 'حساب');
+            } catch (error) {
+                console.error('❌ خطأ في تحميل البيانات:', error);
                 showResult('خطأ في تحميل قاعدة البيانات', 'error');
-            });
+            }
+        }
+
+        // تحميل البيانات عند بدء الصفحة
+        loadAccountData();
 
         function openCamera() {
             document.getElementById('imageInput').click();
@@ -379,7 +384,7 @@
             const originalSizeKB = (file.size / 1024).toFixed(2);
             console.log(`الحجم الأصلي: ${originalSizeKB} KB`);
 
-            // عرض معاينة الصورة الأصلية
+            // عرض معاينة الصورة
             const reader = new FileReader();
             reader.onload = function(event) {
                 const preview = document.getElementById('imagePreview');
@@ -389,13 +394,10 @@
             };
             reader.readAsDataURL(file);
 
-            // ضغط ثم إرسال للـ API
+            // ضغط ومعالجة
             await compressAndProcess(file, originalSizeKB);
         });
 
-        /**
-         * ضغط الصورة قبل الرفع (مثل البرنامج تماماً)
-         */
         async function compressImage(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -404,14 +406,13 @@
                     const img = new Image();
                     
                     img.onload = function() {
-                        // حساب نسبة التصغير
                         let width = img.width;
                         let height = img.height;
                         
                         const ratio = Math.min(
                             COMPRESSION_CONFIG.maxWidth / width,
                             COMPRESSION_CONFIG.maxHeight / height,
-                            1 // لا نكبر الصورة إذا كانت صغيرة
+                            1
                         );
                         
                         width = Math.floor(width * ratio);
@@ -419,34 +420,26 @@
                         
                         console.log(`الأبعاد الجديدة: ${width}x${height}`);
                         
-                        // إنشاء Canvas للضغط
                         const canvas = document.createElement('canvas');
                         canvas.width = width;
                         canvas.height = height;
                         
                         const ctx = canvas.getContext('2d');
-                        
-                        // تحسين جودة الرسم
                         ctx.imageSmoothingEnabled = true;
                         ctx.imageSmoothingQuality = 'high';
-                        
-                        // رسم الصورة المصغرة
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        // تحويل إلى JPEG مضغوط
                         canvas.toBlob(
                             (blob) => {
                                 if (blob) {
                                     const compressedSizeKB = (blob.size / 1024).toFixed(2);
                                     console.log(`الحجم بعد الضغط: ${compressedSizeKB} KB`);
                                     
-                                    // إذا كان الحجم أكبر من المستهدف، نضغط أكثر
                                     if (blob.size / 1024 > COMPRESSION_CONFIG.targetSizeKB) {
-                                        // ضغط إضافي بجودة أقل
                                         canvas.toBlob(
                                             (blob2) => resolve(blob2),
                                             'image/jpeg',
-                                            0.4 // جودة منخفضة جداً
+                                            0.4
                                         );
                                     } else {
                                         resolve(blob);
@@ -469,9 +462,6 @@
             });
         }
 
-        /**
-         * ضغط الصورة ثم إرسالها لـ Gemini
-         */
         async function compressAndProcess(file, originalSizeKB) {
             const loading = document.getElementById('loading');
             const cameraBtn = document.querySelector('.camera-btn');
@@ -481,18 +471,21 @@
             cameraBtn.disabled = true;
 
             try {
-                // 1. ضغط الصورة
+                // ✅ التأكد من تحميل البيانات قبل البحث
+                if (!dataLoaded) {
+                    console.log('⏳ في انتظار تحميل قاعدة البيانات...');
+                    await loadAccountData();
+                }
+
                 sizeInfo.textContent = `الأصلي: ${originalSizeKB} KB - جاري الضغط...`;
                 const compressedBlob = await compressImage(file);
                 const compressedSizeKB = (compressedBlob.size / 1024).toFixed(2);
                 
                 sizeInfo.textContent = `الأصلي: ${originalSizeKB} KB → المضغوط: ${compressedSizeKB} KB ✅`;
                 
-                // 2. تحويل إلى Base64
                 const base64Image = await blobToBase64(compressedBlob);
                 const imageData = base64Image.split(',')[1];
                 
-                // 3. إرسال لـ Gemini
                 await sendToGemini(imageData, compressedBlob.type);
                 
             } catch (error) {
@@ -504,12 +497,9 @@
             }
         }
 
-/**
- * إرسال الصورة المضغوطة لـ Gemini API
- */
-async function sendToGemini(imageData, mimeType) {
-    try {
-        const prompt = `استخرج رقم الحساب من هذه الصورة. الرقم مكون من 10 أرقام بالضبط (مثال: 0001234567 أو 0000023568 أو 0125895423).
+        async function sendToGemini(imageData, mimeType) {
+            try {
+                const prompt = `استخرج رقم الحساب من هذه الصورة. الرقم مكون من 10 أرقام بالضبط (مثال: 0001234567 أو 0000023568 أو 0125895423).
 
 قواعد الاستخراج:
 1. ابحث عن رقم مكون من 10 أرقام بالضبط
@@ -519,75 +509,96 @@ async function sendToGemini(imageData, mimeType) {
 
 أرجع الرقم فقط:`;
 
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: prompt },
-                            {
-                                inline_data: {
-                                    mime_type: mimeType,
-                                    data: imageData
-                                }
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { text: prompt },
+                                    {
+                                        inline_data: {
+                                            mime_type: mimeType,
+                                            data: imageData
+                                        }
+                                    }
+                                ]
+                            }],
+                            generationConfig: {
+                                temperature: 0.1,
+                                maxOutputTokens: 100,
                             }
-                        ]
-                    }],
-                    generationConfig: {
-                        temperature: 0.1,
-                        maxOutputTokens: 100,
+                        })
                     }
-                })
-            }
-        );
+                );
 
-        const result = await response.json();
-        
-        if (result.candidates && result.candidates[0]) {
-            const extractedText = result.candidates[0].content.parts[0].text.trim();
-            console.log('نص مستخرج:', extractedText);
-            
-            const accountNumber = extractNumber(extractedText);
-            
-            if (accountNumber) {
-                // إزالة الأصفار من البداية
-                const cleanedNumber = accountNumber.replace(/^0+/, '') || '0';
+                const result = await response.json();
                 
-                // تحديث الإدخال
-                currentInput = cleanedNumber;
-                updateDisplay();
-                
-                // 🔥 البحث الفوري والتلقائي
-                const fileNumber = accountData[cleanedNumber];
-                
-                if (fileNumber) {
-                    showResult(`✅ تم العثور على الملف<div class="file-number">رقم الملف: ${fileNumber}</div>رقم الحساب: ${cleanedNumber}`, 'success');
+                if (result.candidates && result.candidates[0]) {
+                    const extractedText = result.candidates[0].content.parts[0].text.trim();
+                    console.log('📄 نص مستخرج:', extractedText);
+                    
+                    const accountNumber = extractNumber(extractedText);
+                    
+                    if (accountNumber) {
+                        const cleanedNumber = accountNumber.replace(/^0+/, '') || '0';
+                        console.log('🔢 الرقم المنقح:', cleanedNumber);
+                        
+                        // ✅ تحديث الإدخال والبحث الفوري
+                        currentInput = cleanedNumber;
+                        updateDisplay();
+                        
+                        // ✅ إعطاء وقت صغير للتحديث ثم البحث
+                        setTimeout(() => {
+                            performSearch(cleanedNumber);
+                        }, 100);
+                        
+                    } else {
+                        showResult('❌ لم يتم العثور على رقم صحيح في الصورة', 'error');
+                    }
                 } else {
-                    showResult(`🔍 الرقم المستخرج: ${cleanedNumber}<br><small>❌ لم يتم العثور على هذا الرقم في قاعدة البيانات</small>`, 'info');
+                    throw new Error('فشل في الحصول على استجابة من Gemini');
                 }
-                
-            } else {
-                showResult('❌ لم يتم العثور على رقم صحيح في الصورة', 'error');
+
+            } catch (error) {
+                console.error('خطأ في API:', error);
+                showResult('❌ حدث خطأ في الاتصال بالذكاء الاصطناعي', 'error');
             }
-        } else {
-            throw new Error('فشل في الحصول على استجابة من Gemini');
         }
 
-    } catch (error) {
-        console.error('خطأ في API:', error);
-        showResult('❌ حدث خطأ في الاتصال بالذكاء الاصطناعي', 'error');
-    }
-}
+        // ✅ دالة بحث مستقلة ومحسّنة
+        function performSearch(accountNumber) {
+            console.log('🔍 البحث عن رقم:', accountNumber);
+            console.log('📊 قاعدة البيانات جاهزة:', dataLoaded);
+            console.log('📦 عدد الحسابات:', Object.keys(accountData).length);
+            
+            if (!dataLoaded || Object.keys(accountData).length === 0) {
+                showResult('⏳ جاري تحميل قاعدة البيانات...', 'info');
+                // إعادة المحاولة بعد ثانية
+                setTimeout(() => performSearch(accountNumber), 1000);
+                return;
+            }
 
+            const fileNumber = accountData[accountNumber];
+            console.log('📁 نتيجة البحث:', fileNumber);
 
-        /**
-         * تحويل Blob إلى Base64
-         */
+            if (fileNumber) {
+                showResult(
+                    `✅ تم العثور على الملف<div class="file-number">رقم الملف: ${fileNumber}</div>رقم الحساب: ${accountNumber}`,
+                    'success'
+                );
+            } else {
+                showResult(
+                    `🔍 البحث عن: ${accountNumber}<br><small>❌ لم يتم العثور على هذا الرقم</small>`,
+                    'info'
+                );
+            }
+        }
+
         function blobToBase64(blob) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -597,9 +608,6 @@ async function sendToGemini(imageData, mimeType) {
             });
         }
 
-        /**
-         * استخراج رقم من 10 أرقام
-         */
         function extractNumber(text) {
             const match = text.match(/\b\d{10}\b/);
             return match ? match[0] : null;
@@ -646,13 +654,8 @@ async function sendToGemini(imageData, mimeType) {
                 return;
             }
 
-            const fileNumber = accountData[currentInput];
-
-            if (fileNumber) {
-                showResult(`✅ تم العثور على الملف<div class="file-number">رقم الملف: ${fileNumber}</div>رقم الحساب: ${currentInput}`, 'success');
-            } else {
-                showResult(`🔍 البحث عن: ${currentInput}<br><small>لم يتم العثور على هذا الرقم</small>`, 'info');
-            }
+            // ✅ استخدام دالة البحث المحسّنة
+            performSearch(currentInput);
         }
 
         function showResult(message, type) {
