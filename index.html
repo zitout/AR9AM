@@ -354,20 +354,37 @@
 
         let accountData = {};
         let currentInput = '';
-        let dataLoaded = false; // ✅ متغير جديد لتتبع حالة التحميل
+        let dataLoaded = false;
+        let dataLoadingPromise = null;
 
-        // تحميل ملف JSON مع ضمان جاهزيته
+        // ✅ تحميل ملف JSON مع ضمان جاهزيته (محسّن)
         async function loadAccountData() {
-            try {
-                const response = await fetch('data.json');
-                accountData = await response.json();
-                dataLoaded = true; // ✅ تأكيد التحميل
-                document.getElementById('totalAccounts').textContent = Object.keys(accountData).length;
-                console.log('✅ تم تحميل قاعدة البيانات:', Object.keys(accountData).length, 'حساب');
-            } catch (error) {
-                console.error('❌ خطأ في تحميل البيانات:', error);
-                showResult('خطأ في تحميل قاعدة البيانات', 'error');
+            // إذا كانت البيانات محملة بالفعل، لا نحمّلها مرة أخرى
+            if (dataLoaded && Object.keys(accountData).length > 0) {
+                return;
             }
+
+            // إذا كان التحميل جارياً، ننتظر انتهاءه
+            if (dataLoadingPromise) {
+                return dataLoadingPromise;
+            }
+
+            // بدء التحميل
+            dataLoadingPromise = (async () => {
+                try {
+                    const response = await fetch('data.json');
+                    accountData = await response.json();
+                    dataLoaded = true;
+                    document.getElementById('totalAccounts').textContent = Object.keys(accountData).length;
+                    console.log('✅ تم تحميل قاعدة البيانات:', Object.keys(accountData).length, 'حساب');
+                } catch (error) {
+                    console.error('❌ خطأ في تحميل البيانات:', error);
+                    showResult('خطأ في تحميل قاعدة البيانات', 'error');
+                    dataLoaded = false;
+                }
+            })();
+
+            return dataLoadingPromise;
         }
 
         // تحميل البيانات عند بدء الصفحة
@@ -471,11 +488,8 @@
             cameraBtn.disabled = true;
 
             try {
-                // ✅ التأكد من تحميل البيانات قبل البحث
-                if (!dataLoaded) {
-                    console.log('⏳ في انتظار تحميل قاعدة البيانات...');
-                    await loadAccountData();
-                }
+                // ✅ التأكد من تحميل البيانات في الخلفية
+                loadAccountData();
 
                 sizeInfo.textContent = `الأصلي: ${originalSizeKB} KB - جاري الضغط...`;
                 const compressedBlob = await compressImage(file);
@@ -497,6 +511,7 @@
             }
         }
 
+        // ✅ دالة محسّنة مع ضمان تحميل البيانات قبل البحث
         async function sendToGemini(imageData, mimeType) {
             try {
                 const prompt = `استخرج رقم الحساب من هذه الصورة. الرقم مكون من 10 أرقام بالضبط (مثال: 0001234567 أو 0000023568 أو 0125895423).
@@ -548,14 +563,17 @@
                         const cleanedNumber = accountNumber.replace(/^0+/, '') || '0';
                         console.log('🔢 الرقم المنقح:', cleanedNumber);
                         
-                        // ✅ تحديث الإدخال والبحث الفوري
+                        // ✅ تحديث الإدخال
                         currentInput = cleanedNumber;
                         updateDisplay();
                         
-                        // ✅ إعطاء وقت صغير للتحديث ثم البحث
-                        setTimeout(() => {
-                            performSearch(cleanedNumber);
-                        }, 100);
+                        // ✅ انتظار تحميل البيانات قبل البحث
+                        console.log('⏳ التأكد من تحميل البيانات...');
+                        await loadAccountData();
+                        
+                        // ✅ البحث الفوري بعد التأكد من التحميل
+                        console.log('🔍 بدء البحث...');
+                        performSearch(cleanedNumber);
                         
                     } else {
                         showResult('❌ لم يتم العثور على رقم صحيح في الصورة', 'error');
